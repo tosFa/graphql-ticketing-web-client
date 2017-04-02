@@ -6,7 +6,7 @@ import {
 } from 'react-router-dom'
 import Issue from './issue';
 import Issues from './issues';
-import Login from './adminLogin';
+import Login from './login';
 
 export default () => <Router>
   <div>

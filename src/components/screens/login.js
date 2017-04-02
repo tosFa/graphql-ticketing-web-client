@@ -1,57 +1,36 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, TouchableHighlight, StyleSheet } from 'react-native';
-import gql from 'graphql-tag'
 import { graphql } from 'react-apollo';
-import LoginForm from '../forms/login';
+import Container from '../layout/container';
+import { create } from '../../apollo/mutations/token';
+import LoginForm from '../forms/login'
 
-const PATIENT_QUERY = gql`query PatientAccount{
-  patients {
-    email
-  }
-}`;
-
-const SIGNIN_QUERY = gql`mutation Tokens($email: String!, $password: String!) {
-  tokens(email: $email, password: $password){
-    key
-  }
-}`;
-
-const withData = graphql(PATIENT_QUERY, {
-  props: ({ data }) => ({ apollo: data }),
+const mapMutationToProps = graphql(create, {
+  props: ({ ownProps, mutate }) => ({
+    createAuthToken: ({ email, password, loginAs }) => mutate({ variables: { email, password, loginAs } })
+  })
 });
 
-const withMutation = graphql(SIGNIN_QUERY, {
-  props: ({ ownProps, mutate }) => ({
-    signin: ({ email, password }) => {
-      return mutate({
-        variables: { email, password }
-      })
-    }
+export class Login extends Component {
+  login = (values) => {
+    this.props.createAuthToken(values)
+    .then(response => {
+      if (response.error) alert('error');
 
-  })
-})
-
-class Login extends Component {
-
-  onSubmit = async (values) => {
-    const { signin } = this.props;
-    try {
-      const response = await signin(values);
-      console.log({ response });
-    } catch(e) {
-      alert('error');
-    }
-
-
-
-    alert('finished');
+      localStorage.setItem('chat-auth-token', response.data.token.auth_token);
+      this.props.push('/issues');
+    });
   }
 
   render() {
     return (
-     <LoginForm onSubmit={this.onSubmit}/>
+      <Container>
+        <LoginForm onSubmit={ this.login } />
+      </Container>
     );
   }
 }
 
-export default withMutation(withData(Login));
+export default mapMutationToProps(Login);
+
+
+
